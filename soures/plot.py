@@ -36,10 +36,13 @@ def plot(fgsm_res, pgd_res, df_res):
 if __name__ == "__main__":
     print("Device:", DEVICE)
 
-    payload_bits = np.array([1, 0, 1, 0, 1, 0, 1, 0, 0, 1, 1, 0, 1, 0, 0, 1, 0, 0, 0, 0, 0, 1, 0, 1, 0, 1, 0, 1, 1, 0, 0, 1])
+    payload_bits = np.array([0, 0, 0, 1, 1, 1, 0, 0,
+                             1, 0, 0, 1, 1, 0, 1, 1,
+                             0, 1, 0, 0, 1, 1, 1, 0,
+                             1, 1, 0, 1, 0, 0, 1, 1])
 
     wm_model, fmodel, x_batch, payload_t = load_model_and_batch(
-        wav_path="../wav/watermarks/output_3.wav",
+        wav_path="../wav/watermarks/output_1.wav",
         payload_bits=payload_bits)
 
     print('------------FGSM-------------')

@@ -1,6 +1,7 @@
 import eagerpy as ep
 import numpy as np
 import torch
+
 import wavmark
 from foolbox import PyTorchModel
 from foolbox.attacks import LinfPGD, LinfFastGradientAttack, L2DeepFoolAttack
@@ -18,10 +19,10 @@ L2_BUDGETS = [0.001, 0.003, 0.005, 0.009, 0.01, 0.015, 0.02]
 
 def load_model_and_batch(wav_path: str, payload_bits: np.ndarray):
     """
-    Load model and batch from computer
+    Load model and batch for using in foolbox
     :param wav_path: path to file audio, which was watermarked
     :param payload_bits: payload
-    :return: wavmark model, pytorch model, audio bath, paload
+    :return: wavmark model, pytorch model, audio bath, payload
     """
     wm_model = wavmark.load_model().to(DEVICE).eval()
     sig_full = file_reader.read_as_single_channel(wav_path, aim_sr=SR).astype(np.float32)
@@ -35,7 +36,7 @@ def load_model_and_batch(wav_path: str, payload_bits: np.ndarray):
             super().__init__()
             self.wm = wm
         def forward(self, x):
-            return self.wm.decode(x)  # [B,32]
+            return self.wm.decode(x)
 
     fmodel = PyTorchModel(DecodeWrapper(wm_model).eval(), bounds=(-1, 1))
     return wm_model, fmodel, x_batch, payload_t
@@ -54,7 +55,7 @@ def bit_error_rate(model, x_wave, payload_bits):
     y = payload_bits.cpu().numpy().astype(np.int32)
     return float((p != y).mean())
 
-
+#For DeepFool
 class MatchLogitWrapper(torch.nn.Module):
     def __init__(self, wm, payload_bits):
         super().__init__()
@@ -63,7 +64,7 @@ class MatchLogitWrapper(torch.nn.Module):
     def forward(self, x):
         p = self.wm.decode(x).clamp(1e-6, 1 - 1e-6)
         z = torch.log(p) - torch.log1p(-p)
-        ypm1 = self.ybits * 2.0 - 1.0
+        ypm1 = self.ybits * 2.0 - 1.0 # {0,1} -> {-1,1}
         score = (z * ypm1).mean(dim=1, keepdim=True)
         return torch.cat([score, -score], dim=1)
 
@@ -130,7 +131,6 @@ def deepfool_attack(wm_model, x_batch, payload_t):
     :param payload_t : Ground-truth payload bits of shape [1, 32] (float {0,1}).
     :return: dict 3 values name, epsilons, bit error rate for drawing plot
     """
-    # DeepFool L2 trên classifier nhị phân match/mismatch
     clf = MatchLogitWrapper(wm_model, payload_t).eval()
     fmodel_df = PyTorchModel(clf, bounds=(-1, 1))
 
