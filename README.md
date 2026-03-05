@@ -24,9 +24,6 @@ https://github.com/basil00/WinDivert/releases
 Файлы необходимо взять из следующих папок архива WinDivert:
 
 include/windivert.h
-
 x64/WinDivert.lib
-
 x64/WinDivert.dll
-
 x64/WinDivert64.sys
